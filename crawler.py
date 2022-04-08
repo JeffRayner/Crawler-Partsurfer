@@ -1,4 +1,4 @@
-import re, pandas, xlsxwriter
+import re, csv
 from threading import Thread, Lock
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
@@ -17,11 +17,13 @@ class PartSurfer:
     url = 'https://partsurfer.hpe.com/Search.aspx?SearchText='
     
     threadList = []
+
+    columns_list_Export = ['Model PartNumber ', 'Model Name', 'Category', 'PartNumber', 'Description']
     partNumbers_data = {}
 
     lock = Lock()
 
-    def __init__(self, partNumberList:str, excelName:str='Result'):
+    def __init__(self, partNumberList:str, fileName:str='Result'):
         partNumberList = self.extractListfromText(partNumberList)
         for partNumber in partNumberList:
             thread = Thread(target=self.resquestURL, args=(partNumber,), daemon=True)
@@ -30,8 +32,8 @@ class PartSurfer:
 
         for thread in self.threadList:
             thread.join()
-        
-        self.exportExcel(self.partNumbers_data, excelName)
+        self.export2Excel(self.partNumbers_data, fileName)
+        self.export2Csv(self.partNumbers_data, fileName)
         print('\n','IT\'S OVER','\n')
 
 
@@ -99,22 +101,23 @@ class PartSurfer:
         log.debug( '{} - OK'.format(partNumber) )
 
 
-    def exportExcel(self, dataList:dict, fileName:str):
-        """Save an Excel File with Part Numbers'name of equipament"""
+    def export2Csv(self, datalist:dict, fileName:str):
+        """Save a Data List in a CSV File"""
+
+        header = ['name', 'area', 'country_code2', 'country_code3']
+        data = [
+            ['Albania', 28748, 'AL', 'ALB'],
+            ['Algeria', 2381741, 'DZ', 'DZA'],
+            ['American Samoa', 199, 'AS', 'ASM'],
+            ['Andorra', 468, 'AD', 'AND'],
+            ['Angola', 1246700, 'AO', 'AGO']
+        ]
+        with open(fileName+'.csv', 'w', encoding='UTF8', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(self.columns_list_Export)
+            for row in datalist.values():
+                writer.writerows(row)
         
-        colums = ['Part Number', 'Model Name', 'Category', 'PartNumber', 'Description']
-        file = pandas.ExcelWriter(fileName+'.xlsx', engine='xlsxwriter')
 
-        for partNumber in dataList:
-            aba = pandas.DataFrame(data=dataList[partNumber] , columns=colums)
-            aba.to_excel(file, sheet_name=partNumber, index=False)
-        
-        file.save()
-
-
-
-
-
-if __name__ == '__main__':
-    txt = ('310587-201, 322470-001, 378739-201, 411597-201, 491505-201')
-    PartSurfer(txt)
+#Part Numbers to test
+#txt = ('310587-201, 322470-001a, 378739-201, 411597-201, 491505-201')
