@@ -23,7 +23,7 @@ To call the crawler, you need import the Class PartSurf from crawler.py
 
 The Class need twice arguments :
 
-- 1º it's a text with all partnumbers device, separeted by (,)
+- 1º it's a text with all partnumbers device, separeted by ( , )
 - 2º it's a CSV file name to export, but default's name is "Result"
 
 Exemple:
