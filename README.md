@@ -10,8 +10,7 @@ Save in a CSV file.
 
 ## How intall
 <tr>
-First you need install Python 3 and some libraries.
-After installed python on your system, run this command's line
+First you need install Python 3 and a librarie.
 <br><br>
 
 - pip install bs4==0.0.1
@@ -19,14 +18,16 @@ After installed python on your system, run this command's line
 
 ## How use
 <tr>
-To call the crawler, you need import the Class PartSurf from crawler.py
+To call crawler, you need import the Class PartSurf from crawler.py
 
-The Class need twice arguments :
+Init Class passing a text with all part number's or serial number's device.
 
-- 1º it's a text with all partnumbers device, separeted by ( , )
-- 2º it's a CSV file name to export, but default's name is "Result"
+Public Methods:
 
-Exemple:
+- ### class.find( )
+- ### class.save( FileName )
+
+## Output Exemple:
 
 | Model PartNumber | Model Name | Category | PartNumber | Description |
 | :---: | :---: | :---: | :---: | :---: | 
