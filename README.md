@@ -10,7 +10,7 @@ Save in a CSV file.
 
 ## How intall
 <tr>
-First you need install Python 3 and a librarie.
+First you need install Python 3.9 and a librarie.
 <br><br>
 
 - pip install bs4==0.0.1

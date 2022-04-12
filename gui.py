@@ -1,17 +1,21 @@
 import wx
 from wx.adv import Animation, AnimationCtrl
-#from crawler import PartSurfer
+from crawler import PartSurfer
+from threading import Thread
 
-class MyDialog(wx.Dialog):
+class Window(wx.Dialog):
+    __path:str = ''
+    __fileName:str = None
+    __file:str = None
+    __crawler:PartSurfer = None
+
     def __init__(self, *args, **kwds):
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
         wx.Dialog.__init__(self, *args, **kwds)
         self.SetTitle("Crawler - PartSurfer")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRADIENTINACTIVECAPTION))
-
-        self.pathDirect = ''
-        self.filename = ''
-
+        
+        #Initialization Layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_3 = wx.StdDialogButtonSizer()
@@ -23,17 +27,12 @@ class MyDialog(wx.Dialog):
         self.btn_SAVE.Disable()
         self.btn_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         
-        #self.img = wx.StaticBitmap(self, wx.ID_ANY, wx.Bitmap("Crawler-Partsurfer\load.gif", wx.BITMAP_TYPE_ANY))
-        #self.img.SetSize(self.img.GetBestSize())
-        #self.img = wx.Image('./load.png', type=wx.BITMAP_TYPE_ANY)
-
         self.gif = Animation('./load.gif')
         self.ctrl = AnimationCtrl(self, -1, self.gif)
 
         sizer_1.Add(sizer_2, 3, wx.EXPAND, 0)
         sizer_1.Add(sizer_3, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 4)
         sizer_2.Add(self.btn_LOAD, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
-        #sizer_2.Add(self.img, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
         sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
         
         sizer_3.AddButton(self.btn_SAVE)
@@ -44,33 +43,52 @@ class MyDialog(wx.Dialog):
         self.SetAffirmativeId(self.btn_SAVE.GetId())
         self.SetEscapeId(self.btn_CANCEL.GetId())
         self.Layout()
-
+        
+        #Set Action 
         self.Bind(wx.EVT_BUTTON, self.loadFile, self.btn_LOAD)
         self.Bind(wx.EVT_BUTTON, self.saveFile, self.btn_SAVE)
+        #self.Bind()
 
     def loadFile(self, e):
         with wx.FileDialog(self, 'Open File Text', wildcard="Text files (*.txt)|*.txt",
-                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dialog:
+            if dialog.ShowModal() == wx.ID_CANCEL:
                 return
-            self.filename = fileDialog.GetFilename()
-            self.path = fileDialog.GetDirectory() + '\\'
-            try:
-                with open(self.path+self.filename, 'r') as file:
-                    self.file = file.read()
-                self.btn_SAVE.Enable()
-                self.ctrl.Play()
-            except IOError:
-                wx.LogError('Cannot Open File {}')
-    
+            self.__fileName = dialog.GetFilename()
+            self.__path = dialog.GetDirectory() + '\\'
+        try:
+            with open(self.__path + self.__fileName, 'r') as file:
+                self.__file = file.read()
+        except IOError:
+            wx.LogError('Cannot open file: {}'.format(self.__fileName))
+            return
+        
+        self.btn_LOAD.Disable()
+        self.ctrl.Play()
+        self.thd = Thread(target=self.find, args=())
+        self.thd.start()
+        
+
+    def find(self):
+        self.__crawler = PartSurfer(self.__file)
+        self.__crawler.find()
+        self.btn_SAVE.Enable()
+        self.ctrl.Stop()
+
     def saveFile(self, e):
-        print (self.file)
+        with wx.FileDialog(self, 'Save File CSV', wildcard="CSV files (*.csv)|*.csv",
+                       style=wx.FD_SAVE, defaultDir=self.__path) as dialog:
+            if dialog.ShowModal() == wx.ID_CANCEL:
+                return
+            self.__crawler.export2Csv(dialog.GetPath())
+            wx.LogMessage('File has saved')
+        self.btn_LOAD.Enable()
         self.btn_SAVE.Disable()
 
     
 class MyApp(wx.App):
     def OnInit(self):
-        self.dialog = MyDialog(None, wx.ID_ANY, "")
+        self.dialog = Window(None, wx.ID_ANY, "")
         self.SetTopWindow(self.dialog)
         self.dialog.ShowModal()
         self.dialog.Destroy()
