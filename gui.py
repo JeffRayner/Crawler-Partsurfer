@@ -1,3 +1,5 @@
+from dataclasses import replace
+import time
 import wx
 from wx.adv import Animation, AnimationCtrl
 from crawler import PartSurfer
@@ -17,7 +19,7 @@ class Window(wx.Dialog):
         
         #Initialization Layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_2 = wx.BoxSizer(wx.VERTICAL)
+        self.sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_3 = wx.StdDialogButtonSizer()
         self.SetSizer(sizer_1)
 
@@ -27,13 +29,14 @@ class Window(wx.Dialog):
         self.btn_SAVE.Disable()
         self.btn_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         
-        self.gif = Animation('./load.gif')
-        self.ctrl = AnimationCtrl(self, -1, self.gif)
+        self.gif1 = Animation('./load.gif')
+        self.gif2 = Animation('./done.gif')
+        self.ctrl = AnimationCtrl(self, -1, self.gif1)
 
-        sizer_1.Add(sizer_2, 3, wx.EXPAND, 0)
+        sizer_1.Add(self.sizer_2, 3, wx.EXPAND, 0)
         sizer_1.Add(sizer_3, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 4)
-        sizer_2.Add(self.btn_LOAD, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
-        sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.sizer_2.Add(self.btn_LOAD, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
+        self.sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
         
         sizer_3.AddButton(self.btn_SAVE)
         sizer_3.AddButton(self.btn_CANCEL)
@@ -43,11 +46,15 @@ class Window(wx.Dialog):
         self.SetAffirmativeId(self.btn_SAVE.GetId())
         self.SetEscapeId(self.btn_CANCEL.GetId())
         self.Layout()
+        self.ctrl.Hide()
         
         #Set Action 
         self.Bind(wx.EVT_BUTTON, self.loadFile, self.btn_LOAD)
         self.Bind(wx.EVT_BUTTON, self.saveFile, self.btn_SAVE)
+        self.Bind(wx.custon)
         #self.Bind()
+        #self.Bind(wx.EVT_)
+
 
     def loadFile(self, e):
         with wx.FileDialog(self, 'Open File Text', wildcard="Text files (*.txt)|*.txt",
@@ -62,18 +69,25 @@ class Window(wx.Dialog):
         except IOError:
             wx.LogError('Cannot open file: {}'.format(self.__fileName))
             return
-        
-        self.btn_LOAD.Disable()
         self.ctrl.Play()
         self.thd = Thread(target=self.find, args=())
         self.thd.start()
-        
+    
+    def replaceIMG(self):
+        self.ctrl.Destroy()
+        self.ctrl = AnimationCtrl(self, -1, self.gif2)
+        self.sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.Layout()
+
 
     def find(self):
+        self.btn_LOAD.Disable()
+        self.ctrl.Show()
         self.__crawler = PartSurfer(self.__file)
         self.__crawler.find()
         self.btn_SAVE.Enable()
-        self.ctrl.Stop()
+        wx.PostEvent(self, self.replaceIMG())
+        
 
     def saveFile(self, e):
         with wx.FileDialog(self, 'Save File CSV', wildcard="CSV files (*.csv)|*.csv",
