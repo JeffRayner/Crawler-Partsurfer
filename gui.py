@@ -23,17 +23,19 @@ class MyDialog(wx.Dialog):
         self.btn_SAVE.Disable()
         self.btn_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         
-        self.img = wx.StaticBitmap(self, wx.ID_ANY, wx.Bitmap("C:/Users/Madu/Downloads/load.png", wx.BITMAP_TYPE_ANY))
-        self.img.SetSize(self.img.GetBestSize())
-        #self.img = wx.Image('C:/Users/Madu/Downloads/load.png', type=wx.BITMAP_TYPE_ANY)
+        #self.img = wx.StaticBitmap(self, wx.ID_ANY, wx.Bitmap("Crawler-Partsurfer\load.gif", wx.BITMAP_TYPE_ANY))
+        #self.img.SetSize(self.img.GetBestSize())
+        #self.img = wx.Image('./load.png', type=wx.BITMAP_TYPE_ANY)
 
-        #self.gif = Animation('C:/Users/Madu/Downloads/load.gif')
-        #self.ctrl = AnimationCtrl(self, -1, self.gif)
+        self.gif = Animation('./load.gif')
+        self.ctrl = AnimationCtrl(self, -1, self.gif)
 
         sizer_1.Add(sizer_2, 3, wx.EXPAND, 0)
         sizer_1.Add(sizer_3, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 4)
         sizer_2.Add(self.btn_LOAD, 0, wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, 5)
-        sizer_2.Add(self.img, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        #sizer_2.Add(self.img, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        
         sizer_3.AddButton(self.btn_SAVE)
         sizer_3.AddButton(self.btn_CANCEL)
         sizer_3.Realize()
@@ -57,7 +59,7 @@ class MyDialog(wx.Dialog):
                 with open(self.path+self.filename, 'r') as file:
                     self.file = file.read()
                 self.btn_SAVE.Enable()
-                #self.ctrl.Play()
+                self.ctrl.Play()
             except IOError:
                 wx.LogError('Cannot Open File {}')
     
