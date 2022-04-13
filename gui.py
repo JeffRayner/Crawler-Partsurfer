@@ -1,10 +1,17 @@
-import wx
+import wx, os, sys
 from wx.adv import Animation, AnimationCtrl
 import wx.lib.newevent as NE
 from threading import Thread
 from crawler import PartSurfer
 
 result_evt, EVT_RESULT = NE.NewEvent()
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath('.')
+    return os.path.join(base_path, relative_path)
 
 class Window(wx.Dialog):
     __path:str = ''
@@ -17,6 +24,7 @@ class Window(wx.Dialog):
         wx.Dialog.__init__(self, *args, **kwds)
         self.SetTitle("Crawler - PartSurfer")
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_GRADIENTINACTIVECAPTION))
+        self.SetIcon(wx.Icon(resource_path("icon.ico")))
         
         #Initialization Layout
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -30,8 +38,8 @@ class Window(wx.Dialog):
         self.btn_SAVE.Disable()
         self.btn_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         
-        self.gif1 = Animation('load.gif')
-        self.gif2 = Animation('done.gif')
+        self.gif1 = Animation(resource_path('load.gif'))
+        self.gif2 = Animation(resource_path('done.gif'))
         self.ctrl = AnimationCtrl(self, -1, self.gif1)
 
         sizer_1.Add(self.sizer_2, 3, wx.EXPAND, 0)
