@@ -1,9 +1,10 @@
-from dataclasses import replace
-import time
 import wx
 from wx.adv import Animation, AnimationCtrl
-from crawler import PartSurfer
+import wx.lib.newevent as NE
 from threading import Thread
+from crawler import PartSurfer
+
+result_evt, EVT_RESULT = NE.NewEvent()
 
 class Window(wx.Dialog):
     __path:str = ''
@@ -29,8 +30,8 @@ class Window(wx.Dialog):
         self.btn_SAVE.Disable()
         self.btn_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
         
-        self.gif1 = Animation('./load.gif')
-        self.gif2 = Animation('./done.gif')
+        self.gif1 = Animation('load.gif')
+        self.gif2 = Animation('done.gif')
         self.ctrl = AnimationCtrl(self, -1, self.gif1)
 
         sizer_1.Add(self.sizer_2, 3, wx.EXPAND, 0)
@@ -51,11 +52,8 @@ class Window(wx.Dialog):
         #Set Action 
         self.Bind(wx.EVT_BUTTON, self.loadFile, self.btn_LOAD)
         self.Bind(wx.EVT_BUTTON, self.saveFile, self.btn_SAVE)
-        self.Bind(wx.custon)
-        #self.Bind()
-        #self.Bind(wx.EVT_)
-
-
+        self.Bind(EVT_RESULT, self.replaceIMG)
+        
     def loadFile(self, e):
         with wx.FileDialog(self, 'Open File Text', wildcard="Text files (*.txt)|*.txt",
                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as dialog:
@@ -69,25 +67,28 @@ class Window(wx.Dialog):
         except IOError:
             wx.LogError('Cannot open file: {}'.format(self.__fileName))
             return
-        self.ctrl.Play()
-        self.thd = Thread(target=self.find, args=())
+        
+        self.thd = Thread(target=self.find, args=(), daemon=True)
         self.thd.start()
+        wx.PostEvent(self, result_evt(gif=1, hide=False) )
     
-    def replaceIMG(self):
-        self.ctrl.Destroy()
-        self.ctrl = AnimationCtrl(self, -1, self.gif2)
-        self.sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        self.Layout()
-
-
     def find(self):
         self.btn_LOAD.Disable()
-        self.ctrl.Show()
         self.__crawler = PartSurfer(self.__file)
         self.__crawler.find()
         self.btn_SAVE.Enable()
-        wx.PostEvent(self, self.replaceIMG())
+        wx.PostEvent(self, result_evt(gif=2, hide=False) )
         
+    def replaceIMG(self, evt):
+        gif = {1:self.gif1, 2:self.gif2}[evt.gif]
+        self.ctrl.Destroy()
+        self.ctrl = AnimationCtrl(self, -1, gif)
+        self.sizer_2.Add(self.ctrl, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.ctrl.Play()
+        self.ctrl.Show()
+        self.Layout()
+        if evt.hide:
+            self.ctrl.Hide()
 
     def saveFile(self, e):
         with wx.FileDialog(self, 'Save File CSV', wildcard="CSV files (*.csv)|*.csv",
@@ -96,10 +97,11 @@ class Window(wx.Dialog):
                 return
             self.__crawler.export2Csv(dialog.GetPath())
             wx.LogMessage('File has saved')
+        
+        self.ctrl.Stop()
         self.btn_LOAD.Enable()
         self.btn_SAVE.Disable()
 
-    
 class MyApp(wx.App):
     def OnInit(self):
         self.dialog = Window(None, wx.ID_ANY, "")
